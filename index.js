@@ -49,9 +49,10 @@ const pricingRules = {
 }
 
 const checkoutObj = new Checkout(pricingRules);
-checkoutObj.scan('mbp', 1);
+// checkoutObj.scan('atv', 4);
 checkoutObj.scan('vga', 1);
-checkoutObj.scan('ipd', 1);
+// checkoutObj.scan('ipd', 5);
+checkoutObj.scan('mbp', 1);
 // var product = "vga";
 // var quantity = 1;
 // checkoutObj.scan(product);

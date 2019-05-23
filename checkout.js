@@ -1,6 +1,6 @@
 function Checkout(pricingRules) {
   this.pricingRules = pricingRules;
-  this.carts = new Map();
+  this.carts = []
   this.productDetails = {
     ipd: {
       name: 'Super iPad',
@@ -22,32 +22,38 @@ function Checkout(pricingRules) {
 }
 
 Checkout.prototype.scan = function (product, quantity = 1) {
-  if (this.carts.has(product)) {
-    this.carts.set(product, this.carts.get(product) + quantity);
+  if (this.carts[product]) {
+    this.carts[product].quantity = this.carts[product].quantity + quantity;
   } else {
-    this.carts.set(product, quantity);
+    this.carts.push(product);
+    this.carts[product] = {
+      quantity
+    };
   }
 };
 Checkout.prototype.total = function () {
   let grandTotal = 0;
-  this.carts.forEach((quantity, product) => {
-    let offer = this.pricingRules[product] || null;
-    if (offer != null) {
-      if (offer.offerType === 'buyAndGet') {
-        let noOfFreeProduct = parseInt(quantity / offer.offerDetails.minOrderQuantity);
-        grandTotal += this.productDetails[product].price * (quantity - noOfFreeProduct);
-      } else if (offer.offerType === 'discount') {
-        if (quantity >= offer.offerDetails.minOrderQuantity) {
-          let total = this.productDetails[product].price * quantity;
-          total -= (total * offer.offerDetails.discountPercentage) / 100;
-          grandTotal += total;
-        }
-      }
-    } else {
-      grandTotal += this.productDetails[product].price * quantity;
-    }
+ return this.carts.filter((product) => {
+  this.carts[product].total=10;
+     return this.carts[product];
+    // // let quantity = this.carts[product].quantity;
+    // // let offer = this.pricingRules[product] || null;
+    // // if (offer != null) {
+    // //   if (offer.offerType === 'buyAndGet') {
+    // //     let noOfFreeProduct = parseInt(quantity / offer.offerDetails.minOrderQuantity);
+    // //     product.total = this.productDetails[product].price * (quantity - noOfFreeProduct);
+    // //   } else if (offer.offerType === 'discount') {
+    // //     if (quantity >= offer.offerDetails.minOrderQuantity) {
+    // //       let total = this.productDetails[product].price * quantity;
+    // //       total -= (total * offer.offerDetails.discountPercentage) / 100;
+    // //       product.total = total;
+    // //     }
+    // //   }
+    // } else {
+    //   product.total = this.productDetails[product].price * quantity;
+    // }
   });
-  return grandTotal;
+  return this.carts;
 };
 
 module.exports = Checkout;
