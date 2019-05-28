@@ -5,7 +5,7 @@ Example scenarios:
 
 SKUs Scanned: atv, atv, atv, vga
 
-# node index.js atv atv atv vga
+## node index.js atv atv atv vga
 
 Total expected: $249.00
 
