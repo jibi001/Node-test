@@ -115,7 +115,7 @@ Checkout.prototype.total = function () {
     }
   });
 
-  // return total for cart product
+  // return total of cart
   return Object.keys(tempCart).reduce((total, product) => {
     return total + tempCart[product].total;
   }, 0).toFixed(2);
