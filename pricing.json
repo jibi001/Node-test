@@ -1,0 +1,24 @@
+{
+    "atv": {
+        "offerType": "buyAndGet",
+        "offerDetails": {
+            "minOrderQuantity": 2,
+            "freeProductQuantity": 1
+        }
+    },
+    "ipd": {
+        "offerType": "discount",
+        "offerDetails": {
+            "minOrderQuantity": 5,
+            "discountAmount": 50
+        }
+    },
+    "mbp": {
+        "offerType": "free",
+        "offerDetails": {
+            "product": "vga",
+            "orderQuantity": 1,
+            "freeProductQuantity": 1
+        }
+    }
+}

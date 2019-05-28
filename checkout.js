@@ -1,75 +1,124 @@
+/*******************************
+ *                             *
+ *      Checkout Module        * 
+ *                             *
+ *******************************/
+
+ 
+const fs = require('fs');
+const util = require('util');
+
+const logStdout = process.stdout;
+//create log  file
+const logFile = fs.createWriteStream('log.txt', { flags: 'a' });
+
+/**
+ * Error log
+ * @param {*} text
+ * @param {object} error 
+ * @author <jibi>
+ */
+
+console.error = function (text, error = null) { //
+  logFile.write(util.format(text) + '\n' + error + '\n');
+  logStdout.write(util.format(text) + '\n');
+};
+/**
+ * Init product pricing and get product details from json
+ * @param {*} pricingRules 
+ * @author <jibi>
+ */
 function Checkout(pricingRules) {
   this.pricingRules = pricingRules;
   this.carts = {}
-  this.productDetails = {
-    ipd: {
-      name: 'Super iPad',
-      price: 549.99
-    },
-    atv: {
-      name: 'Apple TV',
-      price: 109.50
-    },
-    mbp: {
-      name: 'Apple TV',
-      price: 399.99
-    },
-    vga: {
-      name: 'VGA adapter',
-      price: 30.00
-    }
-  }
+  this.tempCart = [];
+  let rawData = fs.readFileSync('products.json');
+  this.productDetails = JSON.parse(rawData);
 }
 
+/**
+ * Scan cart product
+ * @param {*} product 
+ * @param {*} quantity default {1}
+ * @author <jibi>
+ */
 Checkout.prototype.scan = function (product, quantity = 1) {
-  const total = 0;
-  if (this.carts[product]) {
+  if (this.carts[product]) { //check product is already exist in cart
     this.carts[product].quantity = this.carts[product].quantity + quantity;
   } else {
+    let total = 0;
     this.carts[product] = { quantity, total };
   }
 };
+
+/**
+ * Calculate subtotal of product
+ * @param {*} price 
+ * @param {*} quantity 
+ * @param {*} offer 
+ * @return {object}  quantity, price and total 
+ * @author <jibi>
+ */
+const subtotal = (price, quantity, offer) => {
+  var total = 0;
+  try {
+    if (offer != null && offer.offerType != 'free') {// check is there any offer is available for the product
+      if (offer.offerType === 'buyAndGet') {
+        if (offer.offerDetails.minOrderQuantity < quantity) {
+          let noOfFreeProduct = parseInt(quantity / offer.offerDetails.minOrderQuantity);
+          total = price * (quantity - noOfFreeProduct);
+        }
+      } else if (offer.offerType === 'discount') {
+        if (quantity >= offer.offerDetails.minOrderQuantity) {// check discount condition
+          total = (price - offer.offerDetails.discountAmount) * quantity;
+        }
+      }
+    }
+    if (total == 0) {
+      total = quantity * price;
+    }
+  }
+  catch (e) {
+    console.error('Something went wrong', e);
+  }
+  return { quantity, price, total };
+}
+
+/**
+ * Cart total 
+ * @return <number> total 
+ * @author <jibi>
+ */
 Checkout.prototype.total = function () {
-  let grandTotal = 0;
-
-  const allowed = ['item1', 'item3'];
-
-  return Object.keys(this.carts)
-    .filter((obj, key) => {
-
-    // .reduce((obj, key) => {
-
-      console.log(key);
-      console.log(obj);
-      // return {
-      //   ...obj,
-      //   [key]: raw[key]
-      // };
-    }, {});
-
-
-  return this.carts.filter((product) => {
-    // this.carts[product].total = 10;
-    console.log(this.carts);
-    // return this.carts[product];
-    // // let quantity = this.carts[product].quantity;
-    // // let offer = this.pricingRules[product] || null;
-    // // if (offer != null) {
-    // //   if (offer.offerType === 'buyAndGet') {
-    // //     let noOfFreeProduct = parseInt(quantity / offer.offerDetails.minOrderQuantity);
-    // //     product.total = this.productDetails[product].price * (quantity - noOfFreeProduct);
-    // //   } else if (offer.offerType === 'discount') {
-    // //     if (quantity >= offer.offerDetails.minOrderQuantity) {
-    // //       let total = this.productDetails[product].price * quantity;
-    // //       total -= (total * offer.offerDetails.discountPercentage) / 100;
-    // //       product.total = total;
-    // //     }
-    // //   }
-    // } else {
-    //   product.total = this.productDetails[product].price * quantity;
-    // }
+  var tempCart = {};
+  Object.keys(this.carts).forEach(product => {
+    try {
+      let quantity = this.carts[product].quantity;
+      let offer = this.pricingRules[product] || null;
+      if (offer != null && offer.offerType == 'free') {
+        let product = offer.offerDetails.product;
+        if (this.productDetails[product]) {
+          this.carts[product].quantity = this.carts[product].quantity - 1;
+          tempCart[product] = subtotal(this.productDetails[product].price, this.carts[product].quantity, offer);
+        } else {
+          console.log(`Product ${product} not found`);
+        }
+      }
+      if (this.productDetails[product]) {
+        tempCart[product] = subtotal(this.productDetails[product].price, quantity, offer);
+      } else {
+        console.log(`Product ${product} not found`);
+      }
+    }
+    catch (e) {
+      console.error('Something went wrong', e);
+    }
   });
-  return this.carts;
+
+  // return total for cart product
+  return Object.keys(tempCart).reduce((total, product) => {
+    return total + tempCart[product].total;
+  }, 0).toFixed(2);
 };
 
 module.exports = Checkout;
